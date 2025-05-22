@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageSequence
 import requests
 import io
 import os
+from bs4 import BeautifulSoup
 
 
 DEFAULT_FONT_PATH = "assets/font/impact.ttf"
@@ -13,9 +14,19 @@ class MemeTextOverlay:
             raise FileNotFoundError(f"Font not found: {font_path}")
         self.font_path = font_path
 
+    def tenor_parser(self, url: str):
+        resp = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        meta = soup.find("meta", property="og:image")
+        gif_url = meta['content'] if meta else url
+        return gif_url
+
     def apply_to_image(self, image_input: str, text: str):
         """image_input can be a PIL.Image, a URL, or raw bytes."""
         if isinstance(image_input, str) and image_input.startswith("http"):
+            if image_input.startswith("https://tenor.com/"):
+                image_input = self.tenor_parser(image_input)
+            print(f"Downloading image from {image_input}")
             response = requests.get(image_input, stream=True)
             if not response.ok:
                 raise ValueError(
