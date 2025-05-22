@@ -97,6 +97,7 @@ class MemeTextOverlay:
         font = ImageFont.truetype(self.font_path, size=10)
         padding = int(height * padding_ratio)
         max_width = width - 2 * padding
+        max_text_height = height * 0.3
 
         def wrap_text_by_pixel(text, font, max_width):
             words = text.split()
@@ -115,7 +116,11 @@ class MemeTextOverlay:
 
         def fits(font):
             lines = wrap_text_by_pixel(text, font, max_width)
-            return len(lines) <= max_lines
+            if len(lines) > max_lines:
+                return False
+            line_height = font.getbbox("Ay")[3]
+            total_height = len(lines) * line_height + (len(lines) - 1) * 5
+            return total_height <= max_text_height
 
         # Binary search font size
         min_size, max_size = 10, int(height * 0.2)
